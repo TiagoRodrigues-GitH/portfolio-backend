@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste API Portfolio</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .container { background: #f5f5f5; padding: 20px; margin-bottom: 20px; border-radius: 5px; }
+        input, textarea, select { width: 100%; margin: 5px 0 15px 0; padding: 8px; }
+        button { margin: 5px; padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        pre { background: #fff; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+<h1>Teste da API Portfolio</h1>
+
+<div class="container">
+    <h3>Login (necessario por causa do Spring Security)</h3>
+    <input type="text" id="username" placeholder="Username" value="user">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="setAuth()">Configurar Autenticacao</button>
+    <div id="authStatus" style="margin-top: 10px; color: red;"></div>
+</div>
+
+<div class="container">
+    <h3>Criar Projeto</h3>
+    <input type="text" id="title" placeholder="Titulo">
+    <textarea id="description" placeholder="Descricao"></textarea>
+    <select id="mediaType">
+        <option value="IMAGE">Imagem</option>
+        <option value="VIDEO">Video</option>
+    </select>
+    <button onclick="createProject()">Criar Projeto</button>
+</div>
+
+<div class="container">
+    <h3>Listar Projetos</h3>
+    <button onclick="listProjects()">Listar Todos</button>
+    <button onclick="listPublishedProjects()">Listar Publicados</button>
+</div>
+
+<div class="container">
+    <h3>Resultado</h3>
+    <pre id="result">Aguardando...</pre>
+</div>
+
+<script>
+    let auth = '';
+
+    function setAuth() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        auth = btoa(`${username}:${password}`);
+        document.getElementById('authStatus').innerHTML = '✅ Autenticacao configurada!';
+        document.getElementById('authStatus').style.color = 'green';
+        listProjects(); // Testar autenticacao
+    }
+
+    function getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (auth) {
+            headers['Authorization'] = `Basic ${auth}`;
+        }
+        return headers;
+    }
+
+    async function createProject() {
+        const project = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            mediaType: document.getElementById('mediaType').value,
+            published: true
+        };
+
+        try {
+            const response = await fetch('http://localhost:8080/api/projects', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(project)
+            });
+            const data = await response.json();
+            document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+            listProjects();
+        } catch (error) {
+            document.getElementById('result').innerHTML = 'Erro: ' + error.message;
+        }
+    }
+
+    async function listProjects() {
+        try {
+            const response = await fetch('http://localhost:8080/api/projects/all', {
+                headers: getHeaders()
+            });
+            const data = await response.json();
+            document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+        } catch (error) {
+            document.getElementById('result').innerHTML = 'Erro: ' + error.message;
+        }
+    }
+
+    async function listPublishedProjects() {
+        try {
+            const response = await fetch('http://localhost:8080/api/projects', {
+                headers: getHeaders()
+            });
+            const data = await response.json();
+            document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+        } catch (error) {
+            document.getElementById('result').innerHTML = 'Erro: ' + error.message;
+        }
+    }
+</script>
+</body>
+</html>
